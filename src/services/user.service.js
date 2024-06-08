@@ -1,9 +1,23 @@
-const userModel = require('../models/user.model')
+const userModel = require('../models/user.model');
+const postService = require('./post.service');
 
 class UserService {
     async createUser(user) {
-        const newUser = new userModel(user)
-        return newUser.save()
+        try {
+            const existingUser = await userModel.findOne({ email: user.email });
+            if (existingUser) {
+                throw new Error('Email already exists');
+            }
+
+            const newUser = new userModel({ ...user });
+            await newUser.save();
+            return newUser;
+        } catch (err) {
+            if (err.code === 11000) {
+                throw new Error('Email already exists');
+            }
+            throw err;
+        }
     }
 
     async detailUser(id) {
@@ -11,12 +25,26 @@ class UserService {
     }
 
     async getListUser() {
-        const dataUser = await userModel.find();
-        return dataUser
+        try {
+            const dataUser = await userModel.find();
+            return dataUser
+        } catch (error) {
+            throw error;
+        }
     }
 
     async deleteUser(id) {
-        return await userModel.findByIdAndDelete(id)
+        try {
+            await postService.deletePostsByUserId(id);
+
+            const deletedUser = await userModel.findByIdAndDelete(id)
+            if (!deletedUser) {
+                throw new Error('User not found');
+            }
+            return deletedUser;
+        } catch (error) {
+            throw error;
+        }
     }
 
     async updateUser(id, userUpdate) {

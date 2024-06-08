@@ -1,8 +1,4 @@
 const userService = require('../services/user.service')
-var validateEmail = function (email) {
-    var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-    return re.test(email)
-};
 
 const listUser = async (req, res) => {
     const dataUser = await userService.getListUser()
@@ -15,17 +11,19 @@ const listUser = async (req, res) => {
 const createUser = async (req, res) => {
     try {
         const user = req.body
-        if (!validateEmail(user.email)) {
-            return res.json({ message: "Email is valid." });
-        }
-
         const newUser = await userService.createUser(user)
         return res.status(201).json({ message: 'User create success !!!', data: newUser })
     } catch (error) {
+        if (error.message === 'Email already exists' || error.code === 11000) {
+            return res.status(400).json({
+                message: 'Error',
+                error: 'Email already exists'
+            });
+        }
         return res.status(400).json({
-            message: "loi",
-            error: error
-        })
+            message: 'Error',
+            error: error.message
+        });
     }
 }
 
