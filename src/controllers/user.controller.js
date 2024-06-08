@@ -1,60 +1,54 @@
-const userModel = require('../models/user.model')
+const userService = require('../services/user.service')
+var validateEmail = function (email) {
+    var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    return re.test(email)
+};
 
 const listUser = async (req, res) => {
-    const dataUser = await userModel.find();
+    const dataUser = await userService.getListUser()
     return res.status(200).json({
         message: "list User data",
         data: dataUser
     })
 }
 
-const createUser = (req, res) => {
-    const { name, email } = req.body
+const createUser = async (req, res) => {
+    try {
+        const user = req.body
+        if (!validateEmail(user.email)) {
+            return res.json({ message: "Email is valid." });
+        }
 
-    const user = new userModel({
-        name,
-        email
-    })
-
-    user.save().then(() => {
-        res.send('User Created')
-    }).catch((err) => {
-        res.status(500).send(err)
-    })
+        const newUser = await userService.createUser(user)
+        return res.status(201).json({ message: 'User create success !!!', data: newUser })
+    } catch (error) {
+        return res.status(400).json({
+            message: "loi",
+            error: error
+        })
+    }
 }
 
-const userDetail = (req, res) => {
+const userDetail = async (req, res) => {
     const { id } = req.params
-
-    userModel.findById(id)
-        .then((user) => {
-            res.send(user)
-        })
-        .catch((err) => {
-            res.status(500).send(err)
-        })
+    const dataDetail = await userService.detailUser(id)
+    return res.status(201).json({ message: 'User detail!!!', data: dataDetail })
 }
 
 
-const deleteUser = (req, res) => {
+const deleteUser = async (req, res) => {
     const { id } = req.params
-    userModel.findByIdAndDelete(id)
-        .then((user) => {
-            res.send(user)
-        }).catch((err) => {
-            res.status(500).send(err)
-        })
+    await userService.deleteUser(id)
+    return res.status(201).json({ message: 'User delete successful' })
 }
 
-const updateUser = (req, res) => {
-    const { name, email } = req.body
+const updateUser = async (req, res) => {
+    const userUpdate = req.body
     const { id } = req.params
-    userModel.findOneAndUpdate({ _id: id }, { name, email }, { new: true })
-        .then((user) => {
-            res.send(user);
-        }).catch((err) => {
-            res.status(500).send(err);
-        });
+    const updateUserData = await userService.updateUser(id, userUpdate)
+
+    return res.status(201).json({ message: 'Update user successful!!', data: updateUserData })
+
 }
 
 module.exports = {

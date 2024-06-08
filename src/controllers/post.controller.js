@@ -1,61 +1,37 @@
-const postModel = require('../models/post.model')
-
+const postService = require('../services/post.service')
 const postContent = async (req, res) => {
-    const { title, content, userId } = req.body
-
-    const createBlog = await postModel.create({ title, content, userId })
-
+    const fromBlog = req.body
+    const createBlog = await postService.create(fromBlog)
     return res.status(200).json({ message: "tao thanh cong", data: createBlog })
 }
 
-const blogDetail = (req, res) => {
+const blogDetail = async (req, res) => {
     const { id } = req.params
-    postModel.findById({ _id: id })
-        .then((blog) => {
-            res.send(blog)
-        })
-        .catch((err) => {
-            res.status(500).send(err)
-        })
+    const dataDetailBlog = await postService.detailBlog(id);
+    return res.status(201).json({ message: 'detail post', data: dataDetailBlog })
 }
 
-const updateBlog = (req, res) => {
+const updateBlog = async (req, res) => {
     const { id } = req.params
     const dataUpdate = req.body
-    postModel.findByIdAndUpdate({ _id: id }, { ...dataUpdate })
-        .then((blog) => {
-            res.send(blog)
-        })
-        .catch((err) => {
-            res.status(500).send(err)
-        })
+    await postService.updateBlog(id, dataUpdate)
+    return res.status(201).json({ message: 'Update post susseccful', })
 }
 
-const deleteBlog = (req, res) => {
+const deleteBlog = async (req, res) => {
     const { id } = req.params
-    postModel.findOneAndDelete({ _id: id })
-        .then(() => {
-            res.send('delete success !!!!')
-        })
-        .catch((err) => {
-            res.status(500).send(err)
-        })
+    const postDelete = await postService.deleteBlog(id)
+    return res.status(201).json({ message: 'Delete post susseccful', data: postDelete })
 }
 
-const findBlogByTitle = (req, res) => {
+const findBlogByTitle = async (req, res) => {
     const { name } = req.query
-    const r1 = new RegExp(`\\b${name}`, 'i');
-    postModel.find({ title: { $regex: r1 } })
-        .then((blog) => {
-            res.send(blog)
-        })
-        .catch((err) => {
-            res.status(500).send(err)
-        })
+    const reSearchPost = await postService.searchBlog(name)
+    return res.status(201).json({ message: 're Search data susseccful', data: reSearchPost })
 }
 
 const listContent = async (req, res) => {
-    const dataPost = await postModel.find();
+    const dataPost = await postService.getListPost()
     return res.status(200).json({
         message: "list Post data",
         data: dataPost
